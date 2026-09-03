@@ -1,0 +1,22 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+  xmlns:tools="http://schemas.android.com/tools"
+  package="com.example.all_in_one_sdk">
+
+  <application>
+    <provider
+      android:name="com.example.all_in_one_sdk.FirebaseBootstrapProvider"
+      android:authorities="${applicationId}.allinone.firebasebootstrap"
+      android:exported="false"
+      android:initOrder="100" />
+
+    <provider
+      android:name="com.google.firebase.provider.FirebaseInitProvider"
+      android:authorities="${applicationId}.firebaseinitprovider"
+      tools:node="remove" />
+
+    <provider
+      android:name="com.facebook.internal.FacebookInitProvider"
+      android:authorities="${applicationId}.FacebookInitProvider"
+      tools:node="remove" />
+  </application>
+</manifest>

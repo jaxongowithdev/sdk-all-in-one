@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Required by Firebase Analytics (play-services-measurement). Patched at runtime in FirebaseResourceInjector. -->
+<resources>
+    <string name="google_app_id" translatable="false">1:000000000000:android:0000000000000000000000</string>
+    <string name="google_api_key" translatable="false">placeholder-api-key</string>
+    <string name="gcm_defaultSenderId" translatable="false">0</string>
+    <string name="project_id" translatable="false">placeholder-project</string>
+    <string name="google_storage_bucket" translatable="false">placeholder.appspot.com</string>
+</resources>

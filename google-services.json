@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "85289965729",
+    "project_id": "cakhia66net",
+    "storage_bucket": "cakhia66net.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:85289965729:android:e76c03eea20fb281df78e0",
+        "android_client_info": {
+          "package_name": "com.cakhiatv.orbit.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA8j6sN0JJODjnRRm6JgMMuVUjfA4Ec5HU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
