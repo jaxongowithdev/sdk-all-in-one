@@ -132,6 +132,31 @@ Same keys on Android and iOS.
 | `autoLogAppEventsEnabled` | No | — | Omit = SDK default unchanged |
 | `advertiserIdCollectionEnabled` | No | — | Omit = SDK default unchanged |
 
+### Facebook App Events
+
+After a valid Facebook config is applied, the native SDK now sends and flushes
+the custom probe event `all_in_one_sdk_ready`. This gives you a deterministic
+event to check in **Meta Events Manager → Test Events**; it does not depend on
+automatic app-activation logging.
+
+Send standard or custom conversion events after configuration:
+
+```dart
+await FacebookSdk.trackEvent(
+  'Purchase',
+  parameters: {
+    '_valueToSum': 9.99,
+    'fb_currency': 'USD',
+  },
+);
+```
+
+Only string, number, and boolean parameter values are passed to Meta. Each
+event is flushed immediately. A successful method call means the native SDK
+accepted and queued the event; network delivery and event eligibility still
+depend on the Meta app's Android package/signing-key hash or iOS bundle ID,
+network access, consent settings, and the app ID/client token being valid.
+
 ### TikTok
 
 **iOS only.** Android accepts the call as a no-op (no error).

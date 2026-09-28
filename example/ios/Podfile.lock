@@ -4,26 +4,13 @@ PODS:
     - FirebaseAnalytics
     - FirebaseCore
     - Flutter
+    - TikTokBusinessSDK
   - FBAEMKit (17.4.0):
     - FBSDKCoreKit_Basics (= 17.4.0)
   - FBSDKCoreKit (17.4.0):
     - FBAEMKit (= 17.4.0)
     - FBSDKCoreKit_Basics (= 17.4.0)
   - FBSDKCoreKit_Basics (17.4.0)
-  - Firebase/Analytics (11.15.0):
-    - Firebase/Core
-  - Firebase/Core (11.15.0):
-    - Firebase/CoreOnly
-    - FirebaseAnalytics (~> 11.15.0)
-  - Firebase/CoreOnly (11.15.0):
-    - FirebaseCore (~> 11.15.0)
-  - firebase_analytics (11.6.0):
-    - Firebase/Analytics (= 11.15.0)
-    - firebase_core
-    - Flutter
-  - firebase_core (3.15.2):
-    - Firebase/CoreOnly (= 11.15.0)
-    - Flutter
   - FirebaseAnalytics (11.15.0):
     - FirebaseAnalytics/Default (= 11.15.0)
     - FirebaseCore (~> 11.15.0)
@@ -120,31 +107,26 @@ PODS:
   - GoogleUtilities/UserDefaults (8.1.0):
     - GoogleUtilities/Logger
     - GoogleUtilities/Privacy
-  - integration_test (0.0.1):
-    - Flutter
   - nanopb (3.30910.0):
     - nanopb/decode (= 3.30910.0)
     - nanopb/encode (= 3.30910.0)
   - nanopb/decode (3.30910.0)
   - nanopb/encode (3.30910.0)
   - PromisesObjC (2.4.0)
+  - TikTokBusinessSDK (1.7.2)
 
 DEPENDENCIES:
   - all_in_one_sdk (from `.symlinks/plugins/all_in_one_sdk/ios`)
-  - firebase_analytics (from `.symlinks/plugins/firebase_analytics/ios`)
-  - firebase_core (from `.symlinks/plugins/firebase_core/ios`)
   - FirebaseAnalytics
   - FirebaseCore
   - Flutter (from `Flutter`)
   - GoogleUtilities
-  - integration_test (from `.symlinks/plugins/integration_test/ios`)
 
 SPEC REPOS:
   trunk:
     - FBAEMKit
     - FBSDKCoreKit
     - FBSDKCoreKit_Basics
-    - Firebase
     - FirebaseAnalytics
     - FirebaseCore
     - FirebaseCoreInternal
@@ -154,39 +136,31 @@ SPEC REPOS:
     - GoogleUtilities
     - nanopb
     - PromisesObjC
+    - TikTokBusinessSDK
 
 EXTERNAL SOURCES:
   all_in_one_sdk:
     :path: ".symlinks/plugins/all_in_one_sdk/ios"
-  firebase_analytics:
-    :path: ".symlinks/plugins/firebase_analytics/ios"
-  firebase_core:
-    :path: ".symlinks/plugins/firebase_core/ios"
   Flutter:
     :path: Flutter
-  integration_test:
-    :path: ".symlinks/plugins/integration_test/ios"
 
 SPEC CHECKSUMS:
-  all_in_one_sdk: 8035e23bf0b1286a81e464636db6555ad0923a8e
+  all_in_one_sdk: 2decc9f618cb3c941259154dc296507319d60584
   FBAEMKit: 58cb5f302cdd715a56d4c1d0dfdd2e423ac1421a
   FBSDKCoreKit: 94d7461d0cecf441b1ba7c41acfff41daa8ccd41
   FBSDKCoreKit_Basics: 151b43db8b834d3f0e02f95d36a44ffd36265e45
-  Firebase: d99ac19b909cd2c548339c2241ecd0d1599ab02e
-  firebase_analytics: 0e25ca1d4001ccedd40b4e5b74c0ec34e18f6425
-  firebase_core: 995454a784ff288be5689b796deb9e9fa3601818
   FirebaseAnalytics: 6433dfd311ba78084fc93bdfc145e8cb75740eae
   FirebaseCore: efb3893e5b94f32b86e331e3bd6dadf18b66568e
   FirebaseCoreInternal: 9afa45b1159304c963da48addb78275ef701c6b4
   FirebaseInstallations: 317270fec08a5d418fdbc8429282238cab3ac843
-  Flutter: e0871f40cf51350855a761d2e70bf5af5b9b5de7
+  Flutter: 71a624a5bc0c04062bf19101d501e466baf2fb47
   GoogleAdsOnDeviceConversion: 2be6297a4f048459e0ae17fad9bfd2844e10cf64
   GoogleAppMeasurement: 700dce7541804bec33db590a5c496b663fbe2539
   GoogleUtilities: 00c88b9a86066ef77f0da2fab05f65d7768ed8e1
-  integration_test: 4a889634ef21a45d28d50d622cf412dc6d9f586e
   nanopb: fad817b59e0457d11a5dfbde799381cd727c1275
   PromisesObjC: f5707f49cb48b9636751c5b2e7d227e43fba9f47
+  TikTokBusinessSDK: c8878048daf0c46a0d9e89932359d553ea38096c
 
 PODFILE CHECKSUM: 598b09dece9c52ea34c8ef135dde5cbe70bc3d42
 
-COCOAPODS: 1.16.2
+COCOAPODS: 1.17.0

@@ -7,6 +7,7 @@ import android.util.Log;
 
 import com.facebook.FacebookException;
 import com.facebook.FacebookSdk;
+import com.facebook.appevents.AppEventsLogger;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.analytics.FirebaseAnalytics;
@@ -70,7 +71,7 @@ public class AllInOneSdkPlugin implements FlutterPlugin, MethodCallHandler {
     if (facebookRaw != null && !facebookRaw.isEmpty()) {
       try {
         Log.i(TAG, "bootstrapFromCache: restoring Facebook from native prefs");
-        configureFacebook(jsonStringToMap(facebookRaw));
+        configureFacebook(jsonStringToMap(facebookRaw), "cached_config");
       } catch (Exception e) {
         Log.e(TAG, "bootstrapFromCache: Facebook restore failed", e);
       }
@@ -257,11 +258,11 @@ public class AllInOneSdkPlugin implements FlutterPlugin, MethodCallHandler {
         source + (createdNewApp ? " (new app)" : " (existing app)"));
   }
 
-  private void configureFacebook(Map<String, Object> args) {
+  private boolean configureFacebook(Map<String, Object> args, String source) {
     String appId = stringOrNull(args.get("applicationId"));
     if (appId == null || appId.isEmpty()) {
       Log.w(TAG, "Facebook SDK: skipped (missing applicationId)");
-      return;
+      return false;
     }
 
     Log.i(TAG, "Facebook SDK: configuring (applicationId=" + appId + ")");
@@ -304,7 +305,7 @@ public class AllInOneSdkPlugin implements FlutterPlugin, MethodCallHandler {
     Context ctx = applicationContext;
     if (ctx == null) {
       Log.w(TAG, "Facebook SDK: skipped sdkInitialize (no context)");
-      return;
+      return false;
     }
     if (!FacebookSdk.isInitialized()) {
       try {
@@ -312,7 +313,7 @@ public class AllInOneSdkPlugin implements FlutterPlugin, MethodCallHandler {
         Log.i(TAG, "Facebook SDK: sdkInitialize done");
       } catch (FacebookException e) {
         Log.e(TAG, "Facebook SDK: sdkInitialize failed", e);
-        return;
+        return false;
       }
     } else {
       Log.i(TAG, "Facebook SDK: already initialized, updated settings only");
@@ -320,13 +321,53 @@ public class AllInOneSdkPlugin implements FlutterPlugin, MethodCallHandler {
 
     FacebookSdk.setAutoInitEnabled(true);
     FacebookSdk.fullyInitialize();
+    if (!FacebookSdk.isInitialized()) {
+      Log.e(TAG, "Facebook SDK: initialization did not complete");
+      return false;
+    }
+
+    try {
+      logFacebookEvent("all_in_one_sdk_ready", singletonFacebookParameter("source", source));
+    } catch (RuntimeException e) {
+      Log.e(TAG, "Facebook SDK: ready event could not be queued", e);
+      return false;
+    }
     Log.i(
         TAG,
         "Facebook SDK: ready (clientTokenSet="
             + (token != null && !token.isEmpty())
             + ", displayNameSet="
             + (displayName != null && !displayName.isEmpty())
-            + ")");
+            + ", probe event=all_in_one_sdk_ready)");
+    return true;
+  }
+
+  private void logFacebookEvent(String eventName, Map<String, Object> parameters) {
+    Context ctx = applicationContext;
+    if (ctx == null || !FacebookSdk.isInitialized()) {
+      throw new IllegalStateException("Facebook SDK is not initialized");
+    }
+    android.os.Bundle bundle = new android.os.Bundle();
+    for (Map.Entry<String, Object> entry : parameters.entrySet()) {
+      Object value = entry.getValue();
+      if (value instanceof String) {
+        bundle.putString(entry.getKey(), (String) value);
+      } else if (value instanceof Number) {
+        bundle.putDouble(entry.getKey(), ((Number) value).doubleValue());
+      } else if (value instanceof Boolean) {
+        bundle.putBoolean(entry.getKey(), (Boolean) value);
+      }
+    }
+    AppEventsLogger logger = AppEventsLogger.newLogger(ctx.getApplicationContext());
+    logger.logEvent(eventName, bundle);
+    logger.flush();
+    Log.i(TAG, "Facebook App Event: queued and flushed (event=" + eventName + ")");
+  }
+
+  private static Map<String, Object> singletonFacebookParameter(String key, Object value) {
+    Map<String, Object> parameters = new HashMap<>();
+    parameters.put(key, value);
+    return parameters;
   }
 
   private static String stringOrNull(Object v) {
@@ -372,13 +413,66 @@ public class AllInOneSdkPlugin implements FlutterPlugin, MethodCallHandler {
           return;
         }
         Log.i(TAG, "configureFacebookSdk: from Flutter channel");
-        configureFacebook(args);
+        if (!configureFacebook(args, "api_config")) {
+          result.error("facebook_init_failed", "Facebook SDK could not initialize or queue its probe event", null);
+          return;
+        }
         try {
           prefs(ctx).edit().putString(KEY_FACEBOOK_CONFIG, mapToJsonString(args)).apply();
         } catch (JSONException e) {
           Log.e(TAG, "configureFacebookSdk: cache serialize failed", e);
         }
         result.success(null);
+        return;
+      }
+
+      case "trackFacebookEvent": {
+        Object raw = call.arguments;
+        if (!(raw instanceof Map)) {
+          result.error("bad_args", "trackFacebookEvent expects a map", null);
+          return;
+        }
+        Map<String, Object> args = (Map<String, Object>) raw;
+        String eventName = stringOrNull(args.get("eventName"));
+        if (eventName == null || eventName.trim().isEmpty()) {
+          result.error("bad_args", "eventName is required", null);
+          return;
+        }
+        Map<String, Object> parameters = new HashMap<>();
+        Object rawParameters = args.get("parameters");
+        if (rawParameters instanceof Map) {
+          Map<?, ?> supplied = (Map<?, ?>) rawParameters;
+          for (Map.Entry<?, ?> entry : supplied.entrySet()) {
+            if (entry.getKey() instanceof String) {
+              Object value = entry.getValue();
+              if (value instanceof String || value instanceof Number || value instanceof Boolean) {
+                parameters.put((String) entry.getKey(), value);
+              }
+            }
+          }
+        }
+        try {
+          logFacebookEvent(eventName.trim(), parameters);
+          result.success(null);
+        } catch (RuntimeException e) {
+          Log.e(TAG, "Facebook trackEvent failed", e);
+          result.error("not_initialized", "Facebook SDK is not initialized; call SdkBootstrap.apply first", null);
+        }
+        return;
+      }
+
+      case "flushFacebookEvents": {
+        try {
+          if (!FacebookSdk.isInitialized()) {
+            throw new IllegalStateException("Facebook SDK is not initialized");
+          }
+          AppEventsLogger.newLogger(applicationContext).flush();
+          Log.i(TAG, "Facebook App Events: flush requested");
+          result.success(null);
+        } catch (RuntimeException e) {
+          Log.e(TAG, "Facebook flush failed", e);
+          result.error("not_initialized", "Facebook SDK is not initialized; call SdkBootstrap.apply first", null);
+        }
         return;
       }
 

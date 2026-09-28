@@ -36,7 +36,7 @@ static NSString *const kAllInOneTikTokAutoEvent = @"LaunchAPP";
 
   NSDictionary *cachedFacebook = [[NSUserDefaults standardUserDefaults]
       dictionaryForKey:kAllInOneFacebookConfigKey];
-  [self configureFacebookWithDictionary:cachedFacebook];
+  [self configureFacebookWithDictionary:cachedFacebook source:@"cached_config"];
 
   NSDictionary *cachedTikTok = [[NSUserDefaults standardUserDefaults]
       dictionaryForKey:kAllInOneTikTokConfigKey];
@@ -111,14 +111,15 @@ static NSString *const kAllInOneTikTokAutoEvent = @"LaunchAPP";
   }
 }
 
-- (void)configureFacebookWithDictionary:(NSDictionary *)args {
+- (BOOL)configureFacebookWithDictionary:(NSDictionary *)args
+                                  source:(NSString *)source {
   if (![args isKindOfClass:[NSDictionary class]])
-    return;
+    return NO;
 
   NSString *appId = args[@"applicationId"];
   if (![appId isKindOfClass:[NSString class]] || appId.length == 0) {
     NSLog(@"[AllInOneSdk] Facebook SDK: skipped (missing applicationId)");
-    return;
+    return NO;
   }
 
   FBSDKSettings *settings = [FBSDKSettings sharedSettings];
@@ -159,10 +160,48 @@ static NSString *const kAllInOneTikTokAutoEvent = @"LaunchAPP";
           advertiser ?: @"(nil)");
   }
 
+  @try {
+    NSDictionary *probeParameters = @{ @"source" : source ?: @"unknown" };
+    [[FBSDKAppEvents shared] logEvent:@"all_in_one_sdk_ready"
+                           parameters:probeParameters];
+    [[FBSDKAppEvents shared] flush];
+    NSLog(@"[AllInOneSdk] Facebook App Event: queued and flushed "
+          @"(event=all_in_one_sdk_ready)");
+  } @catch (NSException *exception) {
+    NSLog(@"[AllInOneSdk] Facebook SDK: ready event could not be queued: %@",
+          exception);
+    return NO;
+  }
+
   NSLog(@"[AllInOneSdk] Facebook SDK: settings applied (clientTokenSet=%@, "
         @"displayNameSet=%@)",
         (settings.clientToken.length > 0) ? @"YES" : @"NO",
         (settings.displayName.length > 0) ? @"YES" : @"NO");
+  return YES;
+}
+
+- (void)trackFacebookEvent:(NSString *)eventName
+                parameters:(NSDictionary *)parameters {
+  if (![eventName isKindOfClass:[NSString class]] || eventName.length == 0) {
+    @throw [NSException exceptionWithName:@"AllInOneSdkBadEvent"
+                                   reason:@"eventName is required"
+                                 userInfo:nil];
+  }
+
+  NSMutableDictionary *safeParameters = [NSMutableDictionary dictionary];
+  if ([parameters isKindOfClass:[NSDictionary class]]) {
+    [parameters enumerateKeysAndObjectsUsingBlock:^(id key, id value, BOOL *stop) {
+      if ([key isKindOfClass:[NSString class]] &&
+          ([value isKindOfClass:[NSString class]] ||
+           [value isKindOfClass:[NSNumber class]])) {
+        safeParameters[key] = value;
+      }
+    }];
+  }
+  [[FBSDKAppEvents shared] logEvent:eventName parameters:safeParameters];
+  [[FBSDKAppEvents shared] flush];
+  NSLog(@"[AllInOneSdk] Facebook App Event: queued and flushed (event=%@)",
+        eventName);
 }
 
 - (void)configureTikTokWithDictionary:(NSDictionary *)args {
@@ -269,13 +308,59 @@ static NSString *const kAllInOneTikTokAutoEvent = @"LaunchAPP";
                                  details:nil]);
       return;
     }
-    [self configureFacebookWithDictionary:args];
+    if (![self configureFacebookWithDictionary:args source:@"api_config"]) {
+      result([FlutterError errorWithCode:@"facebook_init_failed"
+                                 message:@"Facebook SDK could not initialize or queue its probe event"
+                                 details:nil]);
+      return;
+    }
     [[NSUserDefaults standardUserDefaults]
         setObject:args
            forKey:kAllInOneFacebookConfigKey];
     [[NSUserDefaults standardUserDefaults] synchronize];
 
     result(nil);
+    return;
+  }
+
+  if ([@"trackFacebookEvent" isEqualToString:call.method]) {
+    if (![call.arguments isKindOfClass:[NSDictionary class]]) {
+      result([FlutterError errorWithCode:@"bad_args"
+                                 message:@"trackFacebookEvent expects a map"
+                                 details:nil]);
+      return;
+    }
+    NSDictionary *args = (NSDictionary *)call.arguments;
+    NSString *eventName = args[@"eventName"];
+    if (![eventName isKindOfClass:[NSString class]] || eventName.length == 0) {
+      result([FlutterError errorWithCode:@"bad_args"
+                                 message:@"eventName is required"
+                                 details:nil]);
+      return;
+    }
+    @try {
+      [self trackFacebookEvent:eventName parameters:args[@"parameters"]];
+      result(nil);
+    } @catch (NSException *exception) {
+      NSLog(@"[AllInOneSdk] Facebook trackEvent failed: %@", exception);
+      result([FlutterError errorWithCode:@"facebook_event_failed"
+                                 message:@"Facebook SDK could not queue the event; call SdkBootstrap.apply first"
+                                 details:nil]);
+    }
+    return;
+  }
+
+  if ([@"flushFacebookEvents" isEqualToString:call.method]) {
+    @try {
+      [[FBSDKAppEvents shared] flush];
+      NSLog(@"[AllInOneSdk] Facebook App Events: flush requested");
+      result(nil);
+    } @catch (NSException *exception) {
+      NSLog(@"[AllInOneSdk] Facebook flush failed: %@", exception);
+      result([FlutterError errorWithCode:@"facebook_event_failed"
+                                 message:@"Facebook SDK could not flush events"
+                                 details:nil]);
+    }
     return;
   }
 

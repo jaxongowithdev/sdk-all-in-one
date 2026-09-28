@@ -15,6 +15,21 @@ class MockAllInOneSdkPlatform
 
   @override
   Future<void> configureFirebaseSdk(Map<String, Object?> arguments) async {}
+
+  @override
+  Future<void> trackFacebookEvent(Map<String, Object?> arguments) async {}
+
+  @override
+  Future<void> flushFacebookEvents() async {}
+
+  @override
+  Future<void> configureTikTokSdk(Map<String, Object?> arguments) async {}
+
+  @override
+  Future<void> trackTikTokEvent(Map<String, Object?> arguments) async {}
+
+  @override
+  Future<void> flushTikTokEvents() async {}
 }
 
 void main() {

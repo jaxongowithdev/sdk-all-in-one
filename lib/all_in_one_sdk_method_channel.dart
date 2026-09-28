@@ -21,6 +21,16 @@ class MethodChannelAllInOneSdk extends AllInOneSdkPlatform {
   }
 
   @override
+  Future<void> trackFacebookEvent(Map<String, Object?> arguments) async {
+    await methodChannel.invokeMethod<void>('trackFacebookEvent', arguments);
+  }
+
+  @override
+  Future<void> flushFacebookEvents() async {
+    await methodChannel.invokeMethod<void>('flushFacebookEvents');
+  }
+
+  @override
   Future<void> configureFirebaseSdk(Map<String, Object?> arguments) async {
     await methodChannel.invokeMethod<void>('configureFirebaseSdk', arguments);
   }

@@ -2,6 +2,7 @@
 
 export 'all_in_one_sdk_platform_interface.dart';
 export 'src/models/facebook_sdk_config.dart';
+export 'src/facebook_sdk.dart';
 export 'src/models/firebase_dynamic_config.dart';
 export 'src/sdk_bootstrap.dart';
 export 'src/models/tiktok_sdk_config.dart';

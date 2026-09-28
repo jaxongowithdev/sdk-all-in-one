@@ -26,6 +26,14 @@ abstract class AllInOneSdkPlatform extends PlatformInterface {
     );
   }
 
+  Future<void> trackFacebookEvent(Map<String, Object?> arguments) {
+    throw UnimplementedError('trackFacebookEvent() has not been implemented.');
+  }
+
+  Future<void> flushFacebookEvents() {
+    throw UnimplementedError('flushFacebookEvents() has not been implemented.');
+  }
+
   Future<void> configureFirebaseSdk(Map<String, Object?> arguments) {
     throw UnimplementedError(
       'configureFirebaseSdk() has not been implemented.',
