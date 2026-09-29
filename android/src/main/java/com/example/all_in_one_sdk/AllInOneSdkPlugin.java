@@ -265,7 +265,16 @@ public class AllInOneSdkPlugin implements FlutterPlugin, MethodCallHandler {
       return false;
     }
 
+    Context ctx = applicationContext;
+    if (ctx == null) {
+      Log.w(TAG, "Facebook SDK: skipped sdkInitialize (no context)");
+      return false;
+    }
+
     Log.i(TAG, "Facebook SDK: configuring (applicationId=" + appId + ")");
+    // App id and client token must be set before sdkInitialize. Facebook SDK 17
+    // does not auto-init, and setAutoLogAppEventsEnabled() calls
+    // getApplicationContext(), which throws until sdkInitialize() has run.
     FacebookSdk.setApplicationId(appId);
 
     String token = stringOrNull(args.get("clientToken"));
@@ -276,6 +285,18 @@ public class AllInOneSdkPlugin implements FlutterPlugin, MethodCallHandler {
     String displayName = stringOrNull(args.get("displayName"));
     if (displayName != null && !displayName.isEmpty()) {
       FacebookSdk.setApplicationName(displayName);
+    }
+
+    if (!FacebookSdk.isInitialized()) {
+      try {
+        FacebookSdk.sdkInitialize(ctx.getApplicationContext());
+        Log.i(TAG, "Facebook SDK: sdkInitialize done");
+      } catch (FacebookException e) {
+        Log.e(TAG, "Facebook SDK: sdkInitialize failed", e);
+        return false;
+      }
+    } else {
+      Log.i(TAG, "Facebook SDK: already initialized, updated settings only");
     }
 
     Boolean autoLog = boolOrNull(args.get("autoLogAppEventsEnabled"));
@@ -300,23 +321,6 @@ public class AllInOneSdkPlugin implements FlutterPlugin, MethodCallHandler {
           "Facebook SDK: advertiserIdCollectionEnabled not set (value="
               + String.valueOf(args.get("advertiserIdCollectionEnabled"))
               + "), left unchanged");
-    }
-
-    Context ctx = applicationContext;
-    if (ctx == null) {
-      Log.w(TAG, "Facebook SDK: skipped sdkInitialize (no context)");
-      return false;
-    }
-    if (!FacebookSdk.isInitialized()) {
-      try {
-        FacebookSdk.sdkInitialize(ctx.getApplicationContext());
-        Log.i(TAG, "Facebook SDK: sdkInitialize done");
-      } catch (FacebookException e) {
-        Log.e(TAG, "Facebook SDK: sdkInitialize failed", e);
-        return false;
-      }
-    } else {
-      Log.i(TAG, "Facebook SDK: already initialized, updated settings only");
     }
 
     FacebookSdk.setAutoInitEnabled(true);
