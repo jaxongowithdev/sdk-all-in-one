@@ -17,6 +17,14 @@ static NSString *const kAllInOneTikTokConfigKey =
 // Event auto-sent once TikTok SDK init succeeds (hardcoded). Fires on the
 // configure call and on cached auto-init at every app launch.
 static NSString *const kAllInOneTikTokAutoEvent = @"LaunchAPP";
+// FBSDKCoreKit 18 still defaults to Graph v17.0, which Meta removed.
+// Events are queued locally, then the server drops them.
+static NSString *const kAllInOneFacebookGraphAPIVersion = @"v24.0";
+
+static void AllInOneApplyFacebookGraphAPIVersion(void) {
+  [FBSDKSettings sharedSettings].graphAPIVersion =
+      kAllInOneFacebookGraphAPIVersion;
+}
 
 @implementation AllInOneSdkPlugin
 
@@ -26,6 +34,7 @@ static NSString *const kAllInOneTikTokAutoEvent = @"LaunchAPP";
                                   binaryMessenger:[registrar messenger]];
   AllInOneSdkPlugin *instance = [[AllInOneSdkPlugin alloc] init];
   [registrar addMethodCallDelegate:instance channel:channel];
+  AllInOneApplyFacebookGraphAPIVersion();
   [instance bootstrapFromCachedConfig];
 }
 
@@ -123,8 +132,11 @@ static NSString *const kAllInOneTikTokAutoEvent = @"LaunchAPP";
   }
 
   FBSDKSettings *settings = [FBSDKSettings sharedSettings];
+  AllInOneApplyFacebookGraphAPIVersion();
   settings.appID = appId;
-  NSLog(@"[AllInOneSdk] Facebook SDK: configuring (applicationId=%@)", appId);
+  NSLog(@"[AllInOneSdk] Facebook SDK: configuring (applicationId=%@, "
+        @"graphAPIVersion=%@)",
+        appId, settings.graphAPIVersion);
 
   NSString *clientToken = args[@"clientToken"];
   if ([clientToken isKindOfClass:[NSString class]] && clientToken.length > 0) {
@@ -165,6 +177,14 @@ static NSString *const kAllInOneTikTokAutoEvent = @"LaunchAPP";
           @"(value=%@), left unchanged",
           advertiser ?: @"(nil)");
   }
+
+  [settings enableLoggingBehavior:FBSDKLoggingBehaviorAppEvents];
+  [settings enableLoggingBehavior:FBSDKLoggingBehaviorDeveloperErrors];
+  [FBSDKAppEvents shared].loggingOverrideAppID = appId;
+  // Info.plist is what makes the working build initialize with an app id.
+  // Runtime config arrives later, so start the SDK only after those values
+  // and Graph v24 are in place. Otherwise activateApp is sent to a removed API.
+  [[FBSDKApplicationDelegate sharedInstance] initializeSDK];
 
   @try {
     NSDictionary *probeParameters = @{ @"source" : source ?: @"unknown" };
