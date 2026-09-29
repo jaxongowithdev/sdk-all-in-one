@@ -22,7 +22,7 @@ Add dependency to your app `pubspec.yaml`:
 dependencies:
   all_in_one_sdk:
     git:
-      url: https://github.com/codewithlane/sdk-all-in-one.git
+      url: https://github.com/jaxongowithdev/sdk-all-in-one.git
 ```
 
 ## How It Works
@@ -122,7 +122,15 @@ No `google-services.json` / `GoogleService-Info.plist` in the host app — confi
 
 ### Facebook
 
-Same keys on Android and iOS.
+Same keys on Android and iOS. `SdkBootstrap.apply` writes `applicationId`,
+`clientToken`, and `displayName` into the Facebook SDK at runtime, and turns on
+SKAdNetwork reporting.
+
+On iOS, the plugin also merges the keys Apple only reads from the host
+`Info.plist` the next time the app is built: Meta's two `SKAdNetworkItems`,
+`NSUserTrackingUsageDescription`, and the advertiser-tracking flags. If
+`FacebookAppID` is already present, it adds the `fb[APP_ID]` URL scheme.
+No hand-edited plist block is required for those entries.
 
 | Key | Required | Aliases | Notes |
 |-----|----------|---------|-------|

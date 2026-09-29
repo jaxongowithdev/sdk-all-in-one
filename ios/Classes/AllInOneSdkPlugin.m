@@ -148,11 +148,17 @@ static NSString *const kAllInOneTikTokAutoEvent = @"LaunchAPP";
           autoLog ?: @"(nil)");
   }
 
+  settings.SKAdNetworkReportEnabled = YES;
+  NSLog(@"[AllInOneSdk] Facebook SDK: SKAdNetworkReportEnabled=YES");
+
   id advertiser = args[@"advertiserIdCollectionEnabled"];
   if ([advertiser isKindOfClass:[NSNumber class]]) {
     BOOL value = [((NSNumber *)advertiser) boolValue];
     settings.advertiserIDCollectionEnabled = value;
+    settings.advertiserTrackingEnabled = value;
     NSLog(@"[AllInOneSdk] Facebook SDK: advertiserIDCollectionEnabled=%@",
+          value ? @"YES" : @"NO");
+    NSLog(@"[AllInOneSdk] Facebook SDK: advertiserTrackingEnabled=%@",
           value ? @"YES" : @"NO");
   } else {
     NSLog(@"[AllInOneSdk] Facebook SDK: advertiserIdCollectionEnabled not set "

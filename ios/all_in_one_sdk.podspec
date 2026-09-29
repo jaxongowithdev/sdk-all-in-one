@@ -17,9 +17,16 @@ All-in-one Flutter SDK plugin.
   s.dependency 'Flutter'
   s.dependency 'FirebaseCore'
   s.dependency 'FirebaseAnalytics'
-  s.dependency 'FBSDKCoreKit', '~> 17.0'
+  s.dependency 'FBSDKCoreKit', '~> 18.0'
   s.dependency 'TikTokBusinessSDK'
   s.platform = :ios, '13.0'
+  s.script_phases = [
+    {
+      :name => 'Import Facebook iOS config',
+      :script => 'ruby "${PODS_TARGET_SRCROOT}/scripts/import_facebook_plist.rb"',
+      :execution_position => :before_compile
+    }
+  ]
 
   # Flutter.framework does not contain a i386 slice.
   s.pod_target_xcconfig = { 'DEFINES_MODULE' => 'YES', 'EXCLUDED_ARCHS[sdk=iphonesimulator*]' => 'i386' }
